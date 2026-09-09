@@ -1,0 +1,23 @@
+# Transformer Hyperparameters (Graça et al. Architecture)
+model:
+  embed_dim: 64
+  num_heads: 4
+  num_layers: 2
+  ff_dim: 128
+  dropout: 0.1
+  num_partitions: 6
+  combination_size: 2
+  sparsity_ratio: 0.90 # Top-KAST constraint (retain top 10% attention weights)
+
+training:
+  optimizer: adamw
+  lr: 0.001
+  weight_decay: 0.0001
+  batch_size: 64
+  epochs: 15
+  patience: 5
+  early_stopping: true
+
+interpretation:
+  metric: acat # Attentive Class Activation Tokens (attention + gradients)
+  alpha: 0.5 # Equal weighting between normalized attention and token gradients

@@ -1,0 +1,24 @@
+# Baseline Model Configurations
+mdr:
+  order: 2
+  threshold_ratio: 1.0
+
+logistic_regression:
+  max_features: 100
+  penalty: l2
+  C: 1.0
+
+random_forest:
+  n_estimators: 100
+  max_depth: 10
+
+xgboost:
+  n_estimators: 100
+  max_depth: 6
+  learning_rate: 0.05
+  tree_method: hist
+
+deepcombi:
+  hidden_dims: [128, 64]
+  epochs: 25
+  lr: 0.001

@@ -1,0 +1,33 @@
+# Simulation Parameter Grid for Higher-Order Epistasis Detection (Phase 1a)
+dataset:
+  n_snps: 1000
+  n_samples: 1600
+  n_cases: 800
+  n_controls: 800
+
+models:
+  - additive
+  - multiplicative
+  - threshold
+  - xor
+
+interaction_orders:
+  additive: [2, 3, 4, 5, 6, 7, 8]
+  multiplicative: [2, 3, 4, 5]
+  threshold: [2, 3, 4, 5, 6, 7, 8]
+  xor: [2, 3, 4, 5, 6, 7, 8]
+
+mafs:
+  - 0.05
+  - 0.10
+  - 0.20
+  - 0.50
+
+heritabilities:
+  - 0.01
+  - 0.05
+  - 0.20
+  - 0.40
+
+replicates_per_config: 100
+train_val_test_split: [0.70, 0.15, 0.15]
