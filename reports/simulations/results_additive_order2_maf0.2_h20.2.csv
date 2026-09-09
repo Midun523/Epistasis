@@ -1,0 +1,4 @@
+replicate,order,model_type,maf,heritability,detected_all_top_5pct,precision_top_5pct,recall_top_5pct,f1_top_5pct,precision_exact,recall_exact,mean_causal_rank,max_causal_rank
+1,2,additive,0.2,0.2,1,0.04,1.0,0.07692307692307693,0.5,0.5,22.5,44
+2,2,additive,0.2,0.2,0,0.02,0.5,0.038461538461538464,0.0,0.0,37.0,70
+3,2,additive,0.2,0.2,0,0.0,0.0,0.0,0.0,0.0,108.0,163

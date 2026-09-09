@@ -1,0 +1,6 @@
+method,Detection Power (@ Top 5%),recall_top_5pct,mean_causal_rank
+DeepCOMBI (MLP + LRP),1.0,1.0,1.5
+Interaction Logistic Regression,1.0,1.0,4.75
+Partitioned Transformer (Ours),0.0,0.25,184.0
+Random Forest,1.0,1.0,1.5
+XGBoost,1.0,1.0,1.5

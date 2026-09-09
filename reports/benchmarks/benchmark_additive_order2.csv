@@ -1,0 +1,11 @@
+replicate,method,detected_all_top_5pct,recall_top_5pct,f1_top_5pct,mean_causal_rank
+1,Partitioned Transformer (Ours),0,0.0,0.0,261.0
+1,XGBoost,1,1.0,0.07692307692307693,1.5
+1,Random Forest,1,1.0,0.07692307692307693,1.5
+1,Interaction Logistic Regression,1,1.0,0.07692307692307693,8.0
+1,DeepCOMBI (MLP + LRP),1,1.0,0.07692307692307693,1.5
+2,Partitioned Transformer (Ours),0,0.5,0.038461538461538464,107.0
+2,XGBoost,1,1.0,0.07692307692307693,1.5
+2,Random Forest,1,1.0,0.07692307692307693,1.5
+2,Interaction Logistic Regression,1,1.0,0.07692307692307693,1.5
+2,DeepCOMBI (MLP + LRP),1,1.0,0.07692307692307693,1.5
