@@ -1,0 +1,5 @@
+partitions,combinations,snps_per_comb,best_val_auc,mean_causal_rank,causal_ranks,detected_top_5pct,runtime_sec
+6,15,333,0.5596875,211.5,"[52, 371]",False,54.4
+10,45,200,0.5342013888888888,168.0,"[134, 202]",False,97.7
+15,105,133,0.4853472222222222,9.0,"[5, 13]",True,253.1
+20,190,100,0.5424305555555555,384.5,"[104, 665]",False,456.0
