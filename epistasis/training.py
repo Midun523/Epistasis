@@ -128,6 +128,7 @@ def run_full_pipeline(
     batch_size: int = 64,
     device: Optional[str] = None,
     alpha_acat: float = 0.5,
+    aggregation: str = "gated",
 ) -> Dict:
     """
     Runs end-to-end data splitting, training, interpretation, and detection evaluation for a dataset.
@@ -157,6 +158,7 @@ def run_full_pipeline(
         num_partitions=num_partitions,
         combination_size=combination_size,
         sparsity_ratio=sparsity_ratio,
+        aggregation=aggregation,
         num_layers=2,
         ff_dim=128,
         task=task,

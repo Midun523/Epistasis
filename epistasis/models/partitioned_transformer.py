@@ -9,12 +9,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 TaskType = Literal["classification", "regression"]
+AggregationType = Literal["gated", "mean", "max"]
 
 
 class PartitionedAttention(nn.Module):
     """
     Computes single-query multi-head attention partitioned across subsets of SNPs
-    with Top-KAST sparsification to isolate epistatic signals.
+    with Top-KAST sparsification and Cross-Combination Gated Pooling to isolate
+    higher-order epistatic signals without dilution from non-causal combinations.
     """
 
     def __init__(
@@ -24,6 +26,7 @@ class PartitionedAttention(nn.Module):
         num_partitions: int = 6,
         combination_size: int = 2,
         sparsity_ratio: float = 0.90,  # Top-KAST constraint: keep top (1 - sparsity_ratio)
+        aggregation: AggregationType = "gated",  # 'gated' (recommended), 'mean', or 'max'
         dropout: float = 0.1,
     ):
         super().__init__()
@@ -37,6 +40,7 @@ class PartitionedAttention(nn.Module):
         self.num_partitions = num_partitions
         self.combination_size = combination_size
         self.sparsity_ratio = sparsity_ratio
+        self.aggregation = aggregation
 
         # Precompute partition combinations
         self.combinations = list(itertools.combinations(range(num_partitions), combination_size))
@@ -45,6 +49,14 @@ class PartitionedAttention(nn.Module):
         self.k_proj = nn.Linear(embed_dim, embed_dim)
         self.v_proj = nn.Linear(embed_dim, embed_dim)
         self.out_proj = nn.Linear(embed_dim, embed_dim)
+
+        # Cross-Combination Gating Network: weights combination contexts dynamically
+        if self.aggregation == "gated":
+            self.combination_gate = nn.Sequential(
+                nn.Linear(embed_dim, 32),
+                nn.GELU(),
+                nn.Linear(32, 1),
+            )
 
         self.dropout = nn.Dropout(dropout)
 
@@ -81,6 +93,7 @@ class PartitionedAttention(nn.Module):
             partition_slices.append((start, end))
 
         combination_contexts = []
+        combination_gate_logits = []
         global_attention_map = (
             torch.zeros(B, N, device=keys_values.device, dtype=torch.float32)
             if return_attention
@@ -89,7 +102,7 @@ class PartitionedAttention(nn.Module):
 
         scale = 1.0 / math.sqrt(self.head_dim)
 
-        # Iterate over partition combinations (e.g. C(6, 2) = 15 combinations)
+        # Iterate over partition combinations (e.g. C(P, C) combinations)
         for comb in self.combinations:
             # Collect indices for this partition combination
             selected_indices: List[int] = []
@@ -123,7 +136,15 @@ class PartitionedAttention(nn.Module):
 
             # Context for this combination: (B, H, 1, M) @ (B, H, M, d) -> (B, H, 1, d)
             context = torch.matmul(attn_weights, V_sub)
-            combination_contexts.append(context)
+            context_flat = (
+                context.transpose(1, 2).contiguous().view(B, 1, self.embed_dim)
+            )  # (B, 1, D)
+
+            combination_contexts.append(context_flat)
+
+            if self.aggregation == "gated":
+                gate_logit = self.combination_gate(context_flat.squeeze(1))  # (B, 1)
+                combination_gate_logits.append(gate_logit)
 
             if return_attention and global_attention_map is not None:
                 # Average across heads: (B, 1, M) -> (B, M)
@@ -134,19 +155,24 @@ class PartitionedAttention(nn.Module):
 
         if not combination_contexts:
             # Fallback if no combinations were valid
-            combined_context = torch.zeros(B, self.num_heads, 1, self.head_dim, device=keys_values.device)
+            combined_context = torch.zeros(B, 1, self.embed_dim, device=keys_values.device)
         else:
-            # Average context representations across all partition combinations
-            combined_context = torch.stack(combination_contexts, dim=0).mean(dim=0)  # (B, H, 1, d)
+            if self.aggregation == "gated":
+                # Stack contexts: (B, num_combs, D)
+                all_contexts = torch.cat(combination_contexts, dim=1)
+                all_logits = torch.cat(combination_gate_logits, dim=1)  # (B, num_combs)
+                gate_weights = F.softmax(all_logits, dim=-1).unsqueeze(-1)  # (B, num_combs, 1)
+                # Gated weighted combination pooling
+                combined_context = (all_contexts * gate_weights).sum(dim=1, keepdim=True)  # (B, 1, D)
+            elif self.aggregation == "max":
+                all_contexts = torch.cat(combination_contexts, dim=1)
+                combined_context, _ = torch.max(all_contexts, dim=1, keepdim=True)
+            else:  # 'mean'
+                combined_context = torch.cat(combination_contexts, dim=1).mean(dim=1, keepdim=True)
 
-        # Concatenate heads: (B, 1, H * d) = (B, 1, D)
-        combined_context = (
-            combined_context.transpose(1, 2).contiguous().view(B, 1, self.embed_dim)
-        )
         output = self.out_proj(combined_context)
 
         if return_attention and global_attention_map is not None:
-            # Normalize global attention map
             norm_factor = max(len(self.combinations), 1)
             global_attention_map = global_attention_map / norm_factor
 
@@ -159,7 +185,7 @@ class EpistasisTransformer(nn.Module):
     Features:
     - Discrete SNP Allele Embedding {0, 1, 2} + Learnable Locus Position Embeddings
     - Single-Query Phenotype / Class Token
-    - Multi-Partition Sparse Attention (Graça et al. architecture)
+    - Multi-Partition Sparse Attention with Cross-Combination Gated Pooling
     - Dual Classification & Regression Heads for Case/Control and Continuous Pharmacogenomics
     """
 
@@ -171,6 +197,7 @@ class EpistasisTransformer(nn.Module):
         num_partitions: int = 6,
         combination_size: int = 2,
         sparsity_ratio: float = 0.90,
+        aggregation: AggregationType = "gated",
         num_layers: int = 2,
         ff_dim: int = 128,
         dropout: float = 0.1,
@@ -180,6 +207,7 @@ class EpistasisTransformer(nn.Module):
         self.num_snps = num_snps
         self.embed_dim = embed_dim
         self.task = task
+        self.aggregation = aggregation
 
         # SNP Allele Embedding (0: AA, 1: Aa, 2: aa) -> (embed_dim)
         self.snp_embedding = nn.Embedding(3, embed_dim)
@@ -197,6 +225,7 @@ class EpistasisTransformer(nn.Module):
                 num_partitions=num_partitions,
                 combination_size=combination_size,
                 sparsity_ratio=sparsity_ratio,
+                aggregation=aggregation,
                 dropout=dropout,
             )
             for _ in range(num_layers)
