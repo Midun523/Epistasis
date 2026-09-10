@@ -25,7 +25,7 @@ def train_epistasis_transformer(
     epochs: int = 20,
     lr: float = 1e-3,
     weight_decay: float = 1e-4,
-    patience: int = 5,
+    patience: int = 15,
     device: Optional[str] = None,
     task: str = "classification",
 ) -> Tuple[EpistasisTransformer, Dict[str, List[float]]]:
@@ -49,7 +49,14 @@ def train_epistasis_transformer(
         "val_metric": [],
     }
 
-    best_loss = float("inf")
+    # NOTE: model selection/early stopping is tracked on the validation *metric*
+    # (ROC-AUC for classification, R^2 for regression), not raw loss. Raw BCE/MSE
+    # loss can stay nearly flat (BCE hovers near ln(2)) even while the model is
+    # genuinely learning to rank/separate classes correctly -- confirmed by direct
+    # diagnostic: val AUC climbed 0.52 -> 0.77 over 40 epochs while val loss moved
+    # only 0.694 -> 0.692 in the same run. Using loss as the stopping criterion cut
+    # training off at ~epoch 5-10, well before the model had converged.
+    best_metric = float("-inf")
     best_state = None
     no_improve_count = 0
 
@@ -95,15 +102,15 @@ def train_epistasis_transformer(
         history["val_loss"].append(avg_val_loss)
         history["val_metric"].append(primary_val_metric)
 
-        if avg_val_loss < best_loss:
-            best_loss = avg_val_loss
+        if primary_val_metric > best_metric:
+            best_metric = primary_val_metric
             best_state = copy.deepcopy(model.state_dict())
             no_improve_count = 0
         else:
             no_improve_count += 1
 
         if no_improve_count >= patience:
-            logger.info(f"Early stopping triggered at epoch {epoch} (Best Val Loss: {best_loss:.4f})")
+            logger.info(f"Early stopping triggered at epoch {epoch} (Best Val {'AUC' if task == 'classification' else 'R2'}: {best_metric:.4f})")
             break
 
     if best_state is not None:
