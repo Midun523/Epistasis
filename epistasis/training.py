@@ -168,9 +168,20 @@ def run_full_pipeline(
         model, train_loader, val_loader, test_loader, epochs=epochs, device=device, task=task
     )
 
-    # Compute Attentive Class Activation Tokens (ACAT) on full dataset or test set
+    # NOTE: ACAT scoring and detection-power evaluation must run on held-out
+    # test data only, never on data_dict["X"] (the full dataset). Using the
+    # full dataset silently includes the ~70% of samples the model was
+    # trained on, which can make a memorizing/overfit model look like it has
+    # correctly "detected" the causal SNPs even when validation AUC shows it
+    # hasn't generalized at all -- confirmed empirically: a P=15 config with
+    # best_val_auc=0.485 (worse than random) previously reported near-perfect
+    # causal-SNP ranking, which becomes uninterpretable once you know ranking
+    # was computed on data including the training set itself.
+    X_test, y_test = splits["test"]
+
+    # Compute Attentive Class Activation Tokens (ACAT) on held-out test data only
     combined_scores, attn_scores, grad_scores = compute_attentive_class_activation_tokens(
-        trained_model, data_dict["X"], alpha=alpha_acat, batch_size=batch_size, device=device
+        trained_model, X_test, alpha=alpha_acat, batch_size=batch_size, device=device
     )
 
     # Evaluate detection power and ranking metrics
