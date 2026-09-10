@@ -1,5 +1,5 @@
-partitions,combinations,snps_per_comb,best_val_auc,mean_causal_rank,causal_ranks,detected_top_5pct,runtime_sec
-6,15,333,0.6384375,1.5,"[2, 1]",True,71.1
-10,45,200,0.6238194444444444,1.5,"[2, 1]",True,240.8
-15,105,133,0.6606249999999999,3.0,"[1, 5]",True,951.5
-20,190,100,0.5480555555555555,749.0,"[662, 836]",False,388.6
+partitions,combinations,snps_per_comb,mean_val_auc,mean_causal_rank,detection_power,mean_runtime_sec
+6,15,333,0.5540 +/- 0.0553,298.6 +/- 179.0,20.0%,41.8s
+10,45,200,0.5735 +/- 0.0444,329.8 +/- 237.9,20.0%,107.4s
+15,105,133,0.5499 +/- 0.0543,195.2 +/- 125.4,20.0%,377.5s
+20,190,100,0.5985 +/- 0.0236,205.2 +/- 178.8,20.0%,645.6s

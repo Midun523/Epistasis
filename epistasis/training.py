@@ -26,11 +26,14 @@ def train_epistasis_transformer(
     lr: float = 1e-3,
     weight_decay: float = 1e-4,
     patience: int = 15,
+    warmup_epochs: int = 5,
+    ema_decay: float = 0.7,
     device: Optional[str] = None,
     task: str = "classification",
 ) -> Tuple[EpistasisTransformer, Dict[str, List[float]]]:
     """
-    Trains EpistasisTransformer with early stopping and learning rate scheduling.
+    Trains EpistasisTransformer with EMA-smoothed validation metric tracking,
+    warmup guard, early stopping, and learning rate scheduling.
 
     Returns:
         (best_model, history_dict)
@@ -47,18 +50,13 @@ def train_epistasis_transformer(
         "train_loss": [],
         "val_loss": [],
         "val_metric": [],
+        "val_metric_smoothed": [],
     }
 
-    # NOTE: model selection/early stopping is tracked on the validation *metric*
-    # (ROC-AUC for classification, R^2 for regression), not raw loss. Raw BCE/MSE
-    # loss can stay nearly flat (BCE hovers near ln(2)) even while the model is
-    # genuinely learning to rank/separate classes correctly -- confirmed by direct
-    # diagnostic: val AUC climbed 0.52 -> 0.77 over 40 epochs while val loss moved
-    # only 0.694 -> 0.692 in the same run. Using loss as the stopping criterion cut
-    # training off at ~epoch 5-10, well before the model had converged.
     best_metric = float("-inf")
     best_state = None
     no_improve_count = 0
+    smoothed_metric = None
 
     for epoch in range(1, epochs + 1):
         # Training Phase
@@ -96,21 +94,35 @@ def train_epistasis_transformer(
         val_metrics = compute_prediction_metrics(val_targets_arr, val_preds_arr, task=task)
         primary_val_metric = val_metrics["roc_auc"] if task == "classification" else val_metrics["r2"]
 
+        # Exponential Moving Average (EMA) smoothing to guard against single-epoch AUC noise on small splits
+        if smoothed_metric is None:
+            smoothed_metric = primary_val_metric
+        else:
+            smoothed_metric = ema_decay * smoothed_metric + (1.0 - ema_decay) * primary_val_metric
+
         scheduler.step(avg_val_loss)
 
         history["train_loss"].append(avg_train_loss)
         history["val_loss"].append(avg_val_loss)
         history["val_metric"].append(primary_val_metric)
+        history["val_metric_smoothed"].append(smoothed_metric)
 
-        if primary_val_metric > best_metric:
-            best_metric = primary_val_metric
-            best_state = copy.deepcopy(model.state_dict())
-            no_improve_count = 0
+        # Checkpoint selection and early stopping with warmup guard
+        effective_warmup = min(warmup_epochs, max(1, epochs // 4))
+        if epoch >= effective_warmup:
+            if smoothed_metric > best_metric:
+                best_metric = smoothed_metric
+                best_state = copy.deepcopy(model.state_dict())
+                no_improve_count = 0
+            else:
+                no_improve_count += 1
         else:
-            no_improve_count += 1
+            # During warmup, track latest state as baseline fallback
+            best_state = copy.deepcopy(model.state_dict())
+            best_metric = smoothed_metric
 
         if no_improve_count >= patience:
-            logger.info(f"Early stopping triggered at epoch {epoch} (Best Val {'AUC' if task == 'classification' else 'R2'}: {best_metric:.4f})")
+            logger.info(f"Early stopping triggered at epoch {epoch} (Best Smoothed Val {'AUC' if task == 'classification' else 'R2'}: {best_metric:.4f})")
             break
 
     if best_state is not None:
@@ -129,6 +141,9 @@ def run_full_pipeline(
     device: Optional[str] = None,
     alpha_acat: float = 0.5,
     aggregation: str = "gated",
+    warmup_epochs: int = 5,
+    ema_decay: float = 0.7,
+    random_state: int = 42,
 ) -> Dict:
     """
     Runs end-to-end data splitting, training, interpretation, and detection evaluation for a dataset.
@@ -148,7 +163,7 @@ def run_full_pipeline(
     causal_indices = data_dict["causal_indices"]
 
     train_loader, val_loader, test_loader, splits = create_dataloaders(
-        data_dict, batch_size=batch_size, random_state=42
+        data_dict, batch_size=batch_size, random_state=random_state
     )
 
     model = EpistasisTransformer(
@@ -165,7 +180,15 @@ def run_full_pipeline(
     ).to(device)
 
     trained_model, history = train_epistasis_transformer(
-        model, train_loader, val_loader, test_loader, epochs=epochs, device=device, task=task
+        model,
+        train_loader,
+        val_loader,
+        test_loader,
+        epochs=epochs,
+        warmup_epochs=warmup_epochs,
+        ema_decay=ema_decay,
+        device=device,
+        task=task,
     )
 
     # NOTE: ACAT scoring and detection-power evaluation must run on held-out
