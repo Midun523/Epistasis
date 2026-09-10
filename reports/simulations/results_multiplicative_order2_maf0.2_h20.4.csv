@@ -1,0 +1,11 @@
+replicate,order,model_type,maf,heritability,detected_all_top_5pct,precision_top_5pct,recall_top_5pct,f1_top_5pct,precision_exact,recall_exact,mean_causal_rank,max_causal_rank
+1,2,multiplicative,0.2,0.4,0,0.2,0.5,0.28571428571428575,0.5,0.5,4.0,7
+2,2,multiplicative,0.2,0.4,1,0.4,1.0,0.5714285714285715,1.0,1.0,1.5,2
+3,2,multiplicative,0.2,0.4,1,0.4,1.0,0.5714285714285715,0.5,0.5,3.0,5
+4,2,multiplicative,0.2,0.4,1,0.4,1.0,0.5714285714285715,1.0,1.0,1.5,2
+5,2,multiplicative,0.2,0.4,0,0.0,0.0,0.0,0.0,0.0,11.0,12
+6,2,multiplicative,0.2,0.4,0,0.0,0.0,0.0,0.0,0.0,60.5,63
+7,2,multiplicative,0.2,0.4,1,0.4,1.0,0.5714285714285715,1.0,1.0,1.5,2
+8,2,multiplicative,0.2,0.4,0,0.2,0.5,0.28571428571428575,0.5,0.5,4.5,8
+9,2,multiplicative,0.2,0.4,0,0.2,0.5,0.28571428571428575,0.0,0.0,41.0,79
+10,2,multiplicative,0.2,0.4,0,0.2,0.5,0.28571428571428575,0.0,0.0,11.5,19
