@@ -1,0 +1,31 @@
+seed,method,detected_top_5pct,mean_causal_rank,causal_ranks,runtime_sec
+42,XGBoost,True,1.5,"[1, 2]",0.4
+42,Random Forest,True,1.5,"[2, 1]",0.2
+42,Interaction Logistic,False,500.5,"[1000, 1]",0.2
+42,DeepCOMBI (MLP + Saliency),True,1.5,"[1, 2]",3.0
+42,MDR (Candidate Filtered),False,501.0,"[1000, 2]",6.6
+42,Partitioned Transformer (P=6),False,87.0,"[18, 156]",29.1
+101,XGBoost,True,1.5,"[2, 1]",0.4
+101,Random Forest,True,1.5,"[2, 1]",0.2
+101,Interaction Logistic,True,1.5,"[2, 1]",0.1
+101,DeepCOMBI (MLP + Saliency),True,1.5,"[2, 1]",1.2
+101,MDR (Candidate Filtered),True,1.5,"[1, 2]",7.0
+101,Partitioned Transformer (P=6),True,1.5,"[1, 2]",45.9
+202,XGBoost,True,1.5,"[2, 1]",0.4
+202,Random Forest,True,1.5,"[2, 1]",0.2
+202,Interaction Logistic,False,500.5,"[1000, 1]",0.2
+202,DeepCOMBI (MLP + Saliency),True,1.5,"[1, 2]",1.1
+202,MDR (Candidate Filtered),False,500.5,"[1000, 1]",7.0
+202,Partitioned Transformer (P=6),False,82.0,"[139, 25]",29.1
+303,XGBoost,True,1.5,"[2, 1]",0.4
+303,Random Forest,True,1.5,"[2, 1]",0.2
+303,Interaction Logistic,False,689.0,"[1000, 378]",0.2
+303,DeepCOMBI (MLP + Saliency),True,1.5,"[2, 1]",1.1
+303,MDR (Candidate Filtered),False,671.5,"[1000, 343]",6.9
+303,Partitioned Transformer (P=6),False,48.5,"[28, 69]",44.8
+404,XGBoost,True,1.5,"[2, 1]",0.3
+404,Random Forest,True,1.5,"[1, 2]",0.2
+404,Interaction Logistic,False,500.5,"[1000, 1]",0.1
+404,DeepCOMBI (MLP + Saliency),True,1.5,"[2, 1]",1.2
+404,MDR (Candidate Filtered),False,500.5,"[1000, 1]",7.1
+404,Partitioned Transformer (P=6),False,406.0,"[395, 417]",44.9
