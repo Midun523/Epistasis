@@ -1,0 +1,2 @@
+cohort_size,n_genes,interaction_order,heritability,mean_val_r2,mean_causal_rank,detection_power_top_10pct
+800,50,3,0.35,0.0914 +/- 0.1208,9.9 +/- 10.5,20.0%

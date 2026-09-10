@@ -1,0 +1,6 @@
+replicate,seed,best_val_r2,smoothed_val_r2,causal_genes,causal_ranks,mean_causal_rank,top_1_gene,top_2_gene,top_3_gene,detected_all_top_10pct
+1,42,0.2885,0.2747,"['CYP1A1', 'CYP1A2', 'CYP2B6']","[3, 2, 1]",2.0,CYP2B6,CYP1A2,CYP1A1,True
+2,101,0.0459,0.0425,"['CYP1A1', 'CYP1A2', 'CYP2B6']","[6, 3, 1]",3.3,CYP2B6,PARP1,CYP1A2,False
+3,202,-0.0001,-0.0001,"['CYP1A1', 'CYP1A2', 'CYP2B6']","[19, 49, 10]",26.0,PTEN,EGFR,GENE_047,False
+4,303,0.1214,0.0936,"['CYP1A1', 'CYP1A2', 'CYP2B6']","[2, 6, 1]",3.0,CYP2B6,CYP1A1,GENE_045,False
+5,404,0.0012,-0.0043,"['CYP1A1', 'CYP1A2', 'CYP2B6']","[25, 7, 13]",15.0,RB1,SLC22A2,UGT2B7,False
