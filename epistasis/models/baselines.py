@@ -27,45 +27,64 @@ class MultifactorDimensionalityReduction:
     def fit(self, X: np.ndarray, y: np.ndarray, candidate_indices: Optional[List[int]] = None) -> "MultifactorDimensionalityReduction":
         """
         Evaluates multi-locus combinations and finds the combination with highest balanced accuracy.
+        Uses vectorized base-3 integer encoding and bincount for high performance.
         """
         n_samples, n_snps = X.shape
         eval_indices = candidate_indices if candidate_indices is not None else list(range(n_snps))
         combinations = list(itertools.combinations(eval_indices, self.order))
 
+        y_int = y.astype(int)
+        cases_mask = (y_int == 1)
+        ctrls_mask = (y_int == 0)
+        n_cases = np.sum(cases_mask)
+        n_ctrls = np.sum(ctrls_mask)
+
+        base_mult = np.array([3 ** (self.order - 1 - i) for i in range(self.order)], dtype=np.int64)
+        num_bins = 3 ** self.order
+
         best_score = -1.0
         best_comb = None
         best_cells = {}
 
+        X_int = X.astype(np.int64)
+
         for comb in combinations:
-            sub_X = X[:, comb]
-            unique_cells = {}
-            for row, label in zip(sub_X, y):
-                cell = tuple(row)
-                if cell not in unique_cells:
-                    unique_cells[cell] = [0, 0]
-                unique_cells[cell][int(label)] += 1
+            sub_X = X_int[:, comb]
+            cell_ids = np.dot(sub_X, base_mult)
 
-            # Classify cells: 1 (high risk) if cases/ctrls >= threshold_ratio, else 0
-            cell_map = {}
-            for cell, (ctrls, cases) in unique_cells.items():
-                ratio = cases / max(ctrls, 1e-6)
-                cell_map[cell] = 1 if ratio >= self.threshold_ratio else 0
+            cases_per_cell = np.bincount(cell_ids[cases_mask], minlength=num_bins)
+            ctrls_per_cell = np.bincount(cell_ids[ctrls_mask], minlength=num_bins)
 
-            # Predict and compute balanced accuracy
-            preds = np.array([cell_map.get(tuple(r), 0) for r in sub_X])
-            tp = np.sum((preds == 1) & (y == 1))
-            fn = np.sum((preds == 0) & (y == 1))
-            tn = np.sum((preds == 0) & (y == 0))
-            fp = np.sum((preds == 1) & (y == 0))
+            ratios = cases_per_cell / np.maximum(ctrls_per_cell, 1e-6)
+            high_risk_bins = (ratios >= self.threshold_ratio)
 
-            sens = tp / max(tp + fn, 1)
-            spec = tn / max(tn + fp, 1)
+            tp = np.sum(cases_per_cell[high_risk_bins])
+            tn = np.sum(ctrls_per_cell[~high_risk_bins])
+
+            sens = tp / max(n_cases, 1)
+            spec = tn / max(n_ctrls, 1)
             bal_acc = 0.5 * (sens + spec)
 
             if bal_acc > best_score:
                 best_score = bal_acc
                 best_comb = comb
-                best_cells = cell_map
+
+        if best_comb is not None:
+            sub_X = X_int[:, best_comb]
+            cell_ids = np.dot(sub_X, base_mult)
+            cases_per_cell = np.bincount(cell_ids[cases_mask], minlength=num_bins)
+            ctrls_per_cell = np.bincount(cell_ids[ctrls_mask], minlength=num_bins)
+            ratios = cases_per_cell / np.maximum(ctrls_per_cell, 1e-6)
+            high_risk_bins = (ratios >= self.threshold_ratio)
+
+            unique_c_ids = np.unique(cell_ids)
+            for cid in unique_c_ids:
+                digits = []
+                rem = cid
+                for bm in base_mult:
+                    digits.append(int(rem // bm))
+                    rem = rem % bm
+                best_cells[tuple(digits)] = int(high_risk_bins[cid])
 
         self.best_combination = best_comb
         self.best_score = best_score

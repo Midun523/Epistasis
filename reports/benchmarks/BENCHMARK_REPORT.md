@@ -22,11 +22,10 @@ Before running multi-seed benchmarks, three distinct methodological defects in i
 
 ---
 
-## 2. Fair 5-Seed Baseline Comparison on 1,000 SNPs
+## 2. Fair 5-Seed Baseline Comparisons at Scale
 
-**Experimental Setup:** $N=1,000$ SNPs, $n=1,600$ samples (Train: 1120, Val: 240, Test: 240), 2-way Additive Epistasis ($h^2=0.4, \text{MAF}=0.2$), 5 independent random seeds (`[42, 101, 202, 303, 404]`).
-
-### Summary Table (`reports/benchmarks/baseline_summary_1000snp_5seed.csv`)
+### A. Order-2 Additive Epistasis ($N=1,000$ SNPs, $n=1,600$ samples, 5 seeds)
+`reports/benchmarks/baseline_summary_1000snp_5seed.csv`
 
 | Model / Architecture | Detection Power (@ Top 5%) | Mean Causal Rank / 1000 | Mean Runtime / Rep |
 |---|---|---|---|
@@ -37,57 +36,65 @@ Before running multi-seed benchmarks, three distinct methodological defects in i
 | **Interaction Logistic (Top 100 Variance)** | **20.0%** (1/5) | **438.4 ± 257.5** | **0.2s** |
 | **MDR (Top 100 Variance Filtered)** | **20.0%** (1/5) | **435.0 ± 253.4** | **6.9s** |
 
-### Per-Replicate Breakdown (`reports/benchmarks/baseline_comparison_1000snp_5seed.csv`)
+---
 
-```text
-Seed 42:
-  XGBoost:                Causal: [1, 2]     | Mean Rank:   1.5 | Top 5%: True  (0.4s)
-  Random Forest:          Causal: [2, 1]     | Mean Rank:   1.5 | Top 5%: True  (0.2s)
-  DeepCOMBI MLP:          Causal: [1, 2]     | Mean Rank:   1.5 | Top 5%: True  (3.0s)
-  Partitioned Transformer:Causal: [18, 156]  | Mean Rank:  87.0 | Top 5%: False (29.1s)
-  Interaction Logistic:   Causal: [1000, 1]  | Mean Rank: 500.5 | Top 5%: False (0.2s)
-  MDR:                    Causal: [1000, 2]  | Mean Rank: 501.0 | Top 5%: False (6.6s)
+### B. Order-2 XOR Epistasis ($N=1,000$ SNPs, $n=1,600$ samples, 5 seeds)
+`reports/benchmarks/baseline_summary_order2_xor_5seed.csv`  
+*Pure non-linear interaction with zero marginal main effect.*
 
-Seed 101:
-  XGBoost:                Causal: [2, 1]     | Mean Rank:   1.5 | Top 5%: True  (0.4s)
-  Random Forest:          Causal: [2, 1]     | Mean Rank:   1.5 | Top 5%: True  (0.2s)
-  DeepCOMBI MLP:          Causal: [2, 1]     | Mean Rank:   1.5 | Top 5%: True  (1.2s)
-  Partitioned Transformer:Causal: [1, 2]     | Mean Rank:   1.5 | Top 5%: True  (45.9s)
-  Interaction Logistic:   Causal: [2, 1]     | Mean Rank:   1.5 | Top 5%: True  (0.1s)
-  MDR:                    Causal: [1, 2]     | Mean Rank:   1.5 | Top 5%: True  (7.0s)
+| Model / Architecture | Detection Power (@ Top 5%) | Mean Causal Rank / 1000 | Mean Runtime / Rep |
+|---|---|---|---|
+| **XGBoost** | **100.0%** (5/5) | **1.5 ± 0.0** | **0.4s** |
+| **Random Forest** | **100.0%** (5/5) | **1.5 ± 0.0** | **0.2s** |
+| **DeepCOMBI (Dense MLP + Saliency)** | **100.0%** (5/5) | **2.0 ± 0.7** | **1.5s** |
+| **MDR (order=2, exhaustive, $\binom{1000}{2}=499,500$ pairs)** | **100.0%** (5/5) | **1.5 ± 0.0** | **14.4s** |
+| **Partitioned Transformer ($P=6$)** | **0.0%** (0/5) | **171.5 ± 106.6** | **37.5s** |
+| **Interaction Logistic (Top 100 Variance)** | **0.0%** (0/5) | **556.3 ± 207.9** | **0.1s** |
 
-Seed 202:
-  XGBoost:                Causal: [2, 1]     | Mean Rank:   1.5 | Top 5%: True  (0.4s)
-  Random Forest:          Causal: [2, 1]     | Mean Rank:   1.5 | Top 5%: True  (0.2s)
-  DeepCOMBI MLP:          Causal: [1, 2]     | Mean Rank:   1.5 | Top 5%: True  (1.1s)
-  Partitioned Transformer:Causal: [139, 25]  | Mean Rank:  82.0 | Top 5%: False (29.1s)
+*Note on classical baselines:* When evaluated without candidate pre-filtering, exhaustive MDR evaluates all 499,500 pairs in 14.4s via vectorized base-3 indexing, detecting the exact causal pair on 5/5 seeds with 100% power (Rank 1.5). Tree ensembles (XGBoost/RF) and DeepCOMBI also achieve 100% power in $<1.5$s. Interaction Logistic fails because its variance pre-filter eliminates zero-marginal XOR SNPs.
 
-Seed 303:
-  XGBoost:                Causal: [2, 1]     | Mean Rank:   1.5 | Top 5%: True  (0.4s)
-  Random Forest:          Causal: [2, 1]     | Mean Rank:   1.5 | Top 5%: True  (0.2s)
-  DeepCOMBI MLP:          Causal: [2, 1]     | Mean Rank:   1.5 | Top 5%: True  (1.1s)
-  Partitioned Transformer:Causal: [28, 69]   | Mean Rank:  48.5 | Top 5%: False (44.8s)
+---
 
-Seed 404:
-  XGBoost:                Causal: [2, 1]     | Mean Rank:   1.5 | Top 5%: True  (0.3s)
-  Random Forest:          Causal: [1, 2]     | Mean Rank:   1.5 | Top 5%: True  (0.2s)
-  DeepCOMBI MLP:          Causal: [2, 1]     | Mean Rank:   1.5 | Top 5%: True  (1.2s)
-  Partitioned Transformer:Causal: [395, 417] | Mean Rank: 406.0 | Top 5%: False (44.9s)
-```
+### C. Order-3 Additive Epistasis ($N=1,000$ SNPs, $n=1,600$ samples, 5 seeds)
+`reports/benchmarks/baseline_summary_order3_additive_5seed.csv`  
+*3-way multi-locus interaction across 1,000 SNPs.*
+
+| Model / Architecture | Detection Power (@ Top 5%) | Mean Causal Rank / 1000 | Mean Runtime / Rep |
+|---|---|---|---|
+| **XGBoost** | **100.0%** (5/5) | **2.2 ± 0.3** | **0.6s** |
+| **Random Forest** | **100.0%** (5/5) | **2.0 ± 0.0** | **0.2s** |
+| **DeepCOMBI (Dense MLP + Saliency)** | **100.0%** (5/5) | **2.0 ± 0.0** | **1.6s** |
+| **Partitioned Transformer ($P=6$)** | **20.0%** (1/5) | **142.4 ± 126.7** | **38.6s** |
+| **MDR (order=3, candidate-filtered)** | **0.0%** (0/5) | **561.9 ± 0.3** | **5.4s** |
+| **Interaction Logistic (pairwise terms only)** | **0.0%** (0/5) | **566.2 ± 42.8** | **0.3s** |
+
+---
+
+### D. Order-3 Additive Epistasis at Exhaustive Tractability Scale ($N=100$ SNPs, $n=500$ samples, 5 seeds)
+`reports/benchmarks/baseline_summary_order3_additive_5seed.csv` (at $N=100$)  
+*Combos $\binom{100}{3} = 161,700 < 2,000,000 \implies$ MDR runs fully exhaustive.*
+
+| Model / Architecture | Detection Power (@ Top 5%) | Mean Causal Rank / 100 | Mean Runtime / Rep |
+|---|---|---|---|
+| **XGBoost** | **100.0%** (5/5) | **2.0 ± 0.0** | **0.1s** |
+| **Random Forest** | **100.0%** (5/5) | **2.0 ± 0.0** | **0.2s** |
+| **Interaction Logistic** | **100.0%** (5/5) | **2.0 ± 0.0** | **0.0s** |
+| **DeepCOMBI (Dense MLP + Saliency)** | **100.0%** (5/5) | **2.0 ± 0.0** | **0.7s** |
+| **MDR (order=3, exhaustive, 161,700 combos)** | **80.0%** (4/5) | **3.8 ± 4.0** | **2.6s** |
+| **Partitioned Transformer ($P=6$)** | **0.0%** (0/5) | **29.9 ± 24.8** | **6.8s** |
 
 ---
 
 ## 3. Scientific Analysis & Architectural Takeaway (Path B)
 
-1. **Why Dense MLPs and Tree Ensembles Dominate at 1,000 SNPs:**
-   - At $N=1,000$ SNPs, all 1,000 features can easily fit simultaneously into a single GPU/CPU matrix multiplication or decision tree node split.
-   - Dense models (XGBoost, RF, DeepCOMBI) backpropagate gradients or evaluate split gains across all features concurrently, isolating the 2 causal SNPs instantly ($<1.5$ seconds, Rank 1.5).
-2. **The Partitioning Tradeoff:**
-   - Partitioning arbitrary features into $P$ buckets creates $\binom{P}{2}$ combinations, placing the interacting pair into only 1 combination while the remaining combinations process noise.
-   - For un-prioritized 1,000-SNP genomes, partitioning adds optimization overhead without offering sample efficiency gains over dense models.
+1. **Why Dense MLPs and Tree Ensembles Dominate at $\le 1,000$ SNPs:**
+   - At $N \le 1,000$ SNPs, all features fit simultaneously into GPU VRAM / CPU cache as a single dense matrix or decision tree split candidate set.
+   - Dense models (XGBoost, RF, DeepCOMBI) isolate causal loci in $<1.5$ seconds with 100% detection power across additive, XOR, and 3-way interactions.
+2. **The Disjoint Partitioning Tradeoff:**
+   - Arbitrarily bucketing $N=1000$ SNPs into $P=6$ partitions isolates the interacting loci into only 1 of $\binom{P}{2}=15$ combinations. On small sample sizes ($n=1600$), learning to route attention to the active combination is strictly harder than dense feature evaluation.
 3. **Where the Transformer Regime Lies:**
-   - Classical regression / MDR explodes combinatorially at genome scale ($O(S^k)$ for order-$k$ search over $50,000$ SNPs $\rightarrow 1.25 \times 10^9$ pairs).
-   - The sparse partitioned transformer's value is in **Higher-Order Continuous Interactions ($k \ge 3$)** and **Candidate Panel Screening** where non-linear attention gating discovers multi-way epistasis without explicit feature matrix expansion.
+   - Classical regression / MDR explodes combinatorially at genome scale ($O(S^2)$ for 50,000 SNPs $\rightarrow 1.25 \times 10^9$ pairs; $O(S^3) \rightarrow 2.08 \times 10^{13}$ triplets).
+   - The sparse partitioned transformer is an **asymptotic architecture for combinatorially intractable genome scale ($N \ge 20,000 - 500,000$ SNPs)** where dense matrix layers exceed GPU memory and exhaustive search is mathematically impossible.
 
 ---
 

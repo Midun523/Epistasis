@@ -109,14 +109,20 @@ def run_fair_benchmark(
         dc_eval = evaluate_epistasis_detection(deepcombi.score_features(X_test), causal, top_percent=0.05)
         _record("DeepCOMBI (MLP + Saliency)", dc_eval, time.time() - t0)
 
-        # MDR at the true interaction order, variance-prefiltered candidate set
+        # MDR at the true interaction order (exhaustive if comb <= 2,000,000, else candidate-filtered)
         t0 = time.time()
-        variances = np.var(X_train, axis=0)
-        mdr_cand_count = min(mdr_candidate_size, 50) if order >= 3 else mdr_candidate_size
-        mdr_candidates = np.argsort(variances)[-mdr_cand_count:].tolist()
+        from math import comb
+        if comb(n_snps, order) > 2_000_000:
+            variances = np.var(X_train, axis=0)
+            max_feasible = min(mdr_candidate_size, n_snps)
+            mdr_candidates = np.argsort(variances)[-max_feasible:].tolist()
+            mdr_label = f"MDR (order={order}, candidate-filtered)"
+        else:
+            mdr_candidates = None
+            mdr_label = f"MDR (order={order}, exhaustive)"
         mdr = MultifactorDimensionalityReduction(order=order).fit(X_train, y_train, candidate_indices=mdr_candidates)
         mdr_eval = evaluate_epistasis_detection(mdr.score_features(n_snps), causal, top_percent=0.05)
-        _record(f"MDR (order={order}, candidate-filtered)", mdr_eval, time.time() - t0)
+        _record(mdr_label, mdr_eval, time.time() - t0)
 
         # Partitioned Transformer (gated, EMA-smoothed, test-only ACAT -- all this session's fixes)
         t0 = time.time()
