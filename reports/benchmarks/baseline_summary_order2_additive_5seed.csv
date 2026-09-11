@@ -1,7 +1,7 @@
-method,order,model_type,detection_power,mean_causal_rank,mean_runtime_sec
-XGBoost,2,additive,100.0%,1.5 +/- 0.0,0.7s
-Random Forest,2,additive,100.0%,1.5 +/- 0.0,0.3s
-Interaction Logistic,2,additive,20.0%,438.4 +/- 257.5,0.3s
-DeepCOMBI (MLP + Saliency),2,additive,100.0%,1.5 +/- 0.0,3.1s
-"MDR (order=2, exhaustive)",2,additive,100.0%,1.5 +/- 0.0,34.3s
-Partitioned Transformer (P=6),2,additive,20.0%,125.0 +/- 160.7,94.9s
+run_id,run_timestamp,epochs_budget,method,order,model_type,detection_power,mean_causal_rank,mean_runtime_sec
+722fc90b,2026-09-11T09:26:32.651642+00:00,100,XGBoost,2,additive,100.0%,1.5 +/- 0.0,0.5s
+722fc90b,2026-09-11T09:26:32.651642+00:00,100,Random Forest,2,additive,100.0%,1.5 +/- 0.0,0.3s
+722fc90b,2026-09-11T09:26:32.651642+00:00,100,Interaction Logistic,2,additive,20.0%,438.4 +/- 257.5,0.2s
+722fc90b,2026-09-11T09:26:32.651642+00:00,100,DeepCOMBI (MLP + Saliency),2,additive,100.0%,1.5 +/- 0.0,2.3s
+722fc90b,2026-09-11T09:26:32.651642+00:00,100,"MDR (order=2, exhaustive)",2,additive,100.0%,1.5 +/- 0.0,30.1s
+722fc90b,2026-09-11T09:26:32.651642+00:00,100,Partitioned Transformer (P=6),2,additive,20.0%,125.0 +/- 160.7,131.8s
