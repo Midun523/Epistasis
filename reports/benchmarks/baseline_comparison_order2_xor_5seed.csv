@@ -2,30 +2,30 @@ seed,order,model_type,method,detected_top_5pct,mean_causal_rank,causal_ranks,run
 42,2,xor,XGBoost,True,1.5,"[2, 1]",0.4
 42,2,xor,Random Forest,True,1.5,"[2, 1]",0.2
 42,2,xor,Interaction Logistic,False,502.5,"[1000, 5]",0.1
-42,2,xor,DeepCOMBI (MLP + Saliency),True,1.5,"[1, 2]",3.1
-42,2,xor,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",13.9
-42,2,xor,Partitioned Transformer (P=6),False,54.0,"[5, 103]",46.0
+42,2,xor,DeepCOMBI (MLP + Saliency),True,1.5,"[1, 2]",3.3
+42,2,xor,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",13.8
+42,2,xor,Partitioned Transformer (P=6),False,54.0,"[5, 103]",49.0
 101,2,xor,XGBoost,True,1.5,"[2, 1]",0.4
 101,2,xor,Random Forest,True,1.5,"[1, 2]",0.2
-101,2,xor,Interaction Logistic,False,213.5,"[47, 380]",0.1
-101,2,xor,DeepCOMBI (MLP + Saliency),True,2.5,"[4, 1]",1.1
-101,2,xor,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",14.5
-101,2,xor,Partitioned Transformer (P=6),False,194.5,"[139, 250]",28.6
+101,2,xor,Interaction Logistic,False,213.5,"[47, 380]",0.2
+101,2,xor,DeepCOMBI (MLP + Saliency),True,2.5,"[4, 1]",1.2
+101,2,xor,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",13.8
+101,2,xor,Partitioned Transformer (P=6),False,194.5,"[139, 250]",28.8
 202,2,xor,XGBoost,True,1.5,"[2, 1]",0.4
 202,2,xor,Random Forest,True,1.5,"[1, 2]",0.2
 202,2,xor,Interaction Logistic,False,687.5,"[1000, 375]",0.1
-202,2,xor,DeepCOMBI (MLP + Saliency),True,1.5,"[1, 2]",1.2
-202,2,xor,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",14.6
-202,2,xor,Partitioned Transformer (P=6),False,97.5,"[162, 33]",29.1
+202,2,xor,DeepCOMBI (MLP + Saliency),True,1.5,"[1, 2]",1.1
+202,2,xor,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",14.5
+202,2,xor,Partitioned Transformer (P=6),False,97.5,"[162, 33]",28.4
 303,2,xor,XGBoost,True,1.5,"[1, 2]",0.4
 303,2,xor,Random Forest,True,1.5,"[1, 2]",0.2
 303,2,xor,Interaction Logistic,False,689.0,"[1000, 378]",0.2
 303,2,xor,DeepCOMBI (MLP + Saliency),True,3.0,"[5, 1]",1.0
-303,2,xor,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",14.7
-303,2,xor,Partitioned Transformer (P=6),False,180.0,"[110, 250]",37.7
+303,2,xor,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",14.1
+303,2,xor,Partitioned Transformer (P=6),False,180.0,"[110, 250]",35.9
 404,2,xor,XGBoost,True,1.5,"[1, 2]",0.4
 404,2,xor,Random Forest,True,1.5,"[2, 1]",0.2
-404,2,xor,Interaction Logistic,False,689.0,"[1000, 378]",0.2
-404,2,xor,DeepCOMBI (MLP + Saliency),True,1.5,"[1, 2]",1.3
+404,2,xor,Interaction Logistic,False,689.0,"[1000, 378]",0.1
+404,2,xor,DeepCOMBI (MLP + Saliency),True,1.5,"[1, 2]",1.2
 404,2,xor,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",14.4
-404,2,xor,Partitioned Transformer (P=6),False,331.5,"[650, 13]",46.2
+404,2,xor,Partitioned Transformer (P=6),False,331.5,"[650, 13]",47.5

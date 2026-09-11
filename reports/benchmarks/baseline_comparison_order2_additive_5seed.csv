@@ -1,0 +1,31 @@
+seed,order,model_type,method,detected_top_5pct,mean_causal_rank,causal_ranks,runtime_sec
+42,2,additive,XGBoost,True,1.5,"[1, 2]",0.6
+42,2,additive,Random Forest,True,1.5,"[2, 1]",0.3
+42,2,additive,Interaction Logistic,False,500.5,"[1000, 1]",0.3
+42,2,additive,DeepCOMBI (MLP + Saliency),True,1.5,"[1, 2]",5.2
+42,2,additive,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",33.5
+42,2,additive,Partitioned Transformer (P=6),False,87.0,"[18, 156]",41.1
+101,2,additive,XGBoost,True,1.5,"[2, 1]",0.7
+101,2,additive,Random Forest,True,1.5,"[2, 1]",0.3
+101,2,additive,Interaction Logistic,True,1.5,"[2, 1]",0.2
+101,2,additive,DeepCOMBI (MLP + Saliency),True,1.5,"[2, 1]",2.8
+101,2,additive,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",32.8
+101,2,additive,Partitioned Transformer (P=6),True,1.5,"[1, 2]",145.6
+202,2,additive,XGBoost,True,1.5,"[2, 1]",0.6
+202,2,additive,Random Forest,True,1.5,"[2, 1]",0.3
+202,2,additive,Interaction Logistic,False,500.5,"[1000, 1]",0.3
+202,2,additive,DeepCOMBI (MLP + Saliency),True,1.5,"[1, 2]",2.5
+202,2,additive,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",46.3
+202,2,additive,Partitioned Transformer (P=6),False,82.0,"[139, 25]",39.8
+303,2,additive,XGBoost,True,1.5,"[2, 1]",0.8
+303,2,additive,Random Forest,True,1.5,"[2, 1]",0.3
+303,2,additive,Interaction Logistic,False,689.0,"[1000, 378]",0.4
+303,2,additive,DeepCOMBI (MLP + Saliency),True,1.5,"[2, 1]",2.5
+303,2,additive,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",29.7
+303,2,additive,Partitioned Transformer (P=6),False,48.5,"[28, 69]",95.2
+404,2,additive,XGBoost,True,1.5,"[2, 1]",0.6
+404,2,additive,Random Forest,True,1.5,"[1, 2]",0.3
+404,2,additive,Interaction Logistic,False,500.5,"[1000, 1]",0.3
+404,2,additive,DeepCOMBI (MLP + Saliency),True,1.5,"[2, 1]",2.5
+404,2,additive,"MDR (order=2, exhaustive)",True,1.5,"[1, 2]",29.4
+404,2,additive,Partitioned Transformer (P=6),False,406.0,"[395, 417]",152.7
