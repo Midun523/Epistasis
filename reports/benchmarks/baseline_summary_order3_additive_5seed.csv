@@ -1,0 +1,7 @@
+method,order,model_type,detection_power,mean_causal_rank,mean_runtime_sec
+XGBoost,3,additive,100.0%,2.0 +/- 0.0,0.2s
+Random Forest,3,additive,100.0%,2.0 +/- 0.0,0.2s
+Interaction Logistic,3,additive,100.0%,2.0 +/- 0.0,0.1s
+DeepCOMBI (MLP + Saliency),3,additive,100.0%,2.0 +/- 0.0,1.7s
+"MDR (order=3, candidate-filtered)",3,additive,0.0%,39.7 +/- 11.9,20.0s
+Partitioned Transformer (P=6),3,additive,0.0%,27.2 +/- 15.8,4.5s
