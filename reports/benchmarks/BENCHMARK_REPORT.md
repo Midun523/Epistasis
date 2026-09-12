@@ -107,7 +107,28 @@ To establish where exhaustive search actually becomes impractical (rather than r
 
 ---
 
-## 4. Scientific Findings & Nuanced Research Conclusions
+## 4. Dense Baselines Empirical Resource Scaling Probe (`scripts/scaling_probe.py`)
+`reports/benchmarks/scaling_probe.csv` (SHA-256: `B2F3B20A6E1A08EB2F7B4F2D20FC8499A63C02303F8B1CCFA4494207FCCC09A1`)
+
+To find where non-combinatorial classical baselines encounter their empirical wall (rather than assuming an arbitrary scale), XGBoost, Random Forest, and DeepCOMBI were evaluated on random genetic data ($n=1,600$ samples) across feature dimensions up to $N=300,000$ SNPs with a 300s timeout per method:
+
+| $N$ SNPs | XGBoost (100 Trees) | Random Forest (100 Trees) | DeepCOMBI (Dense GPU MLP) |
+|---|---|---|---|
+| **1,000** | 0.7s – 0.9s (521 MB) | 0.3s (531 MB) | 3.9s – 5.8s (1,033 MB) |
+| **5,000** | 3.0s – 9.2s (1,051 MB) | 0.5s – 1.2s (1,056 MB) | 1.4s – 3.9s (1,055 MB) |
+| **20,000** | 39.1s – 106.2s (1,239 MB) | 1.1s – 5.1s (1,250 MB) | 3.4s – 8.0s (1,346 MB) |
+| **50,000** | **231.0s / TIMEOUT (300s)** | 2.1s – 18.1s (1,297 MB) | 5.2s – 12.6s (1,585 MB) |
+| **100,000** | **TIMEOUT (>300s)** | 17.6s – 27.4s (2,737 MB) | 9.4s – 13.6s (3,214 MB) |
+| **300,000** | **TIMEOUT (>300s)** | **19.8s** (2,242 MB) | **28.6s** (2,928 MB) |
+
+### Key Scaling Insights:
+1. **XGBoost hits a steep computational wall between $N=20,000$ and $N=50,000$**: Boosting sequentially builds trees by evaluating histogram split bins across all features; at $N=50,000$, single-run fitting exceeds 230s and hits timeout at $N \ge 100,000$.
+2. **Random Forest scales sub-linearly**: Because `RandomForestClassifier` samples `max_features = sqrt(N)` at each split, runtime remains exceptionally low ($\le 27.4$s even at $N=100,000$ and $N=300,000$).
+3. **DeepCOMBI GPU Matrix Multiplications scale smoothly**: Dense linear projection layers ($W \in \mathbb{R}^{N \times d}$) execute via optimized BLAS GPU kernels on the RTX 3050, fitting $N=300,000$ in 28.6s within ~2.9 GB VRAM.
+
+---
+
+## 5. Scientific Findings & Nuanced Research Conclusions
 
 1. **Combinatorial vs. Continuous Feature Selection:**
    - Classical exhaustive methods (MDR, full interaction logistic) scale as $O(N^k)$ and become intractable beyond $N=2,000$ (Order 2) and $N=300$ (Order 3).
@@ -115,6 +136,7 @@ To establish where exhaustive search actually becomes impractical (rather than r
 2. **The Non-Combinatorial Baselines Advantage (Tree Ensembles & MLPs):**
    - Tree ensembles (XGBoost, Random Forest) and DeepCOMBI (MLP + Saliency) do not evaluate combinatorial pairs/triplets explicitly.
    - At $N=1,000$, their dense feature representations isolate epistatic loci in $\le 4.3$s across additive, XOR, and 3-way interactions with 100% detection power.
+   - While XGBoost encounters a wall at $N \ge 50,000$, Random Forest and DeepCOMBI scale readily to $N=300,000$.
 3. **The Architectural Tradeoff of Partitioning:**
    - Disjoint partitioning splits $N=1,000$ SNPs into $P=6$ subsets, placing the causal loci in only 1 of $\binom{P}{2}=15$ combinations.
    - On small sample sizes ($n=1,600$), learning to route attention dynamically across sparse combinations without leaking noisy gradients requires substantial signal-to-noise ratio.
@@ -122,7 +144,7 @@ To establish where exhaustive search actually becomes impractical (rather than r
 
 ---
 
-## 5. Summary of Multi-Seed Pharmacogenomics Validation (Phase 2/3)
+## 6. Summary of Multi-Seed Pharmacogenomics Validation (Phase 2/3)
 
 **Setup:** $n=800$ cell lines, $N=50$ candidate pharmacogenomic genes, 3-way continuous interaction (`CYP1A1`, `CYP1A2`, `CYP2B6`), $h^2=0.35$, 5 independent replicates (`reports/pharmacogenomics/pharmacogenomics_summary.csv`).
 
