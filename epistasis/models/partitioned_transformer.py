@@ -79,10 +79,19 @@ class PartitionedAttention(nn.Module):
         """
         B, N, D = keys_values.shape
 
-        # Linear projections & split into heads: (B, num_heads, L, head_dim)
+        # Query projection only -- this is a single token, negligible memory regardless of N
         Q = self.q_proj(query).view(B, 1, self.num_heads, self.head_dim).transpose(1, 2)
-        K = self.k_proj(keys_values).view(B, N, self.num_heads, self.head_dim).transpose(1, 2)
-        V = self.v_proj(keys_values).view(B, N, self.num_heads, self.head_dim).transpose(1, 2)
+
+        # NOTE: K/V are intentionally NOT projected for the full N here. The original
+        # implementation projected keys_values -> K, V for all N SNPs upfront (O(N) memory:
+        # ~1.6GB tokens + ~3.3GB K/V at N=100,000, B=64 -- this alone exceeded a 6GB GPU
+        # before the per-combination slicing loop even started, causing a confirmed CUDA OOM).
+        # Since every downstream use of K/V happens via index_select on a small per-combination
+        # subset (M ~ N/num_partitions), we slice the RAW tokens first and project only that
+        # subset per combination instead. This is mathematically identical to the original
+        # (nn.Linear applies independently per token/row, so selecting rows before or after
+        # the linear transform gives identical results for the selected rows) but changes
+        # peak memory from O(N) to O(M) per combination.
 
         # Determine partition boundaries
         partition_size = math.ceil(N / self.num_partitions)
@@ -115,9 +124,14 @@ class PartitionedAttention(nn.Module):
                 continue
 
             idx_tensor = torch.tensor(selected_indices, device=keys_values.device, dtype=torch.long)
-            K_sub = torch.index_select(K, dim=2, index=idx_tensor)  # (B, H, M, d)
-            V_sub = torch.index_select(V, dim=2, index=idx_tensor)  # (B, H, M, d)
-            M = K_sub.size(2)
+
+            # Slice RAW tokens first (B, M, D) -- M ~ N/num_partitions, not N
+            tokens_sub = torch.index_select(keys_values, dim=1, index=idx_tensor)
+            M = tokens_sub.size(1)
+
+            # Project only this subset -- O(M) memory, not O(N)
+            K_sub = self.k_proj(tokens_sub).view(B, M, self.num_heads, self.head_dim).transpose(1, 2)  # (B, H, M, d)
+            V_sub = self.v_proj(tokens_sub).view(B, M, self.num_heads, self.head_dim).transpose(1, 2)  # (B, H, M, d)
 
             # Dot-product attention: Q (B, H, 1, d) @ K_sub^T (B, H, d, M) -> (B, H, 1, M)
             attn_scores = torch.matmul(Q, K_sub.transpose(-2, -1)) * scale
