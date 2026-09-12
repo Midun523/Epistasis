@@ -53,8 +53,20 @@ def run_fair_benchmark(
     run_id = uuid.uuid4().hex[:8]
     run_timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
     device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    # Adaptive batch size: at large N, the transformer's locus_embedding (N×64) and
+    # token tensor (B×N×64) must fit in GPU VRAM alongside per-combination autograd
+    # intermediates. Even with gradient checkpointing, B=64 at N=100,000 creates a
+    # 1.5 GB token tensor; B=16 keeps it at ~400 MB with comfortable headroom on 6 GB.
+    if n_snps >= 50000:
+        batch_size = 16
+    elif n_snps >= 10000:
+        batch_size = 32
+    else:
+        batch_size = 64
+
     print(f"=== Fair {len(seeds)}-Seed Benchmark | Run ID: {run_id} | Timestamp: {run_timestamp} ===", flush=True)
-    print(f"=== order={order} model={model_type} N={n_snps} n={n_samples} h2={heritability} epochs={epochs} on {device.upper()} ===", flush=True)
+    print(f"=== order={order} model={model_type} N={n_snps} n={n_samples} h2={heritability} epochs={epochs} batch_size={batch_size} on {device.upper()} ===", flush=True)
 
     raw_results = []
 
@@ -75,7 +87,7 @@ def run_fair_benchmark(
         print(f"Dataset generated. Causal Loci ({order}-way): {causal}", flush=True)
 
         train_loader, val_loader, test_loader, splits = create_dataloaders(
-            data, batch_size=64, random_state=seed
+            data, batch_size=batch_size, random_state=seed
         )
         X_train, y_train = splits["train"]
         X_test, y_test = splits["test"]
@@ -143,7 +155,7 @@ def run_fair_benchmark(
         tf_res = run_full_pipeline(
             data_dict=data, epochs=epochs, num_partitions=num_partitions, combination_size=2,
             sparsity_ratio=0.85, aggregation="gated", warmup_epochs=5, ema_decay=0.7,
-            random_state=seed, device=device,
+            random_state=seed, device=device, batch_size=batch_size,
         )
         tf_eval = tf_res["detection_eval"]
         tf_epochs = len(tf_res.get("history", {}).get("val_metric", []))
